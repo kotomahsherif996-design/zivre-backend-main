@@ -92,10 +92,12 @@ socketio = SocketIO(app,
 )
 
 # Configure CORS properly
-ALLOWED_ORIGINS = os.environ.get('ALLOWED_ORIGINS', 'zivre-frontend-main.vercel.app').split(',')
+ALLOWED_ORIGINS = os.environ.get('ALLOWED_ORIGINS', 
+    'https://zivre-frontend-main.vercel.app,https://zivre-frontend.vercel.app,http://localhost:5173'
+).split(',')
 
-CORS(app, 
-     supports_credentials=True, 
+CORS(app,
+     supports_credentials=True,
      origins=ALLOWED_ORIGINS,
      allow_headers=["Content-Type", "Authorization", "X-Requested-With", "Accept"],
      expose_headers=["Content-Type", "Set-Cookie"],
