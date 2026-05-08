@@ -92,7 +92,7 @@ socketio = SocketIO(app,
 )
 
 # Configure CORS properly
-ALLOWED_ORIGINS = os.environ.get('ALLOWED_ORIGINS', 
+ALLOWED_ORIGINS = os.environ.get('ALLOWED_ORIGINS','https://vercel.com/kotomahsherif996-designs-projects/zivre-frontend-main/5gNAVnErJjZ64ipa953GZS5x4pvC', 
     'https://zivre-frontend-main.vercel.app,http://localhost:5173'
 ).split(',')
 
