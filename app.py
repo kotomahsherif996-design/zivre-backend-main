@@ -2431,7 +2431,6 @@ def get_provider_jobs(provider_id):
         'amount': j.amount,
         'provider_payout': j.provider_payout,
         'components_data': j.components_data,
-        'components_data': j.components_data,
         'rating': j.rating,
         'customer_confirmed': j.customer_confirmed,
         'provider_completed': j.provider_completed,
