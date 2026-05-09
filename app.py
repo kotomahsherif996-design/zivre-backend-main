@@ -2363,7 +2363,7 @@ def get_available_jobs():
         'location_region': req.location_region,
         'location_landmark': req.location_landmark,
         'amount': req.amount,
-        'provider_payout': req.provider_payout
+        'provider_payout': req.provider_payout,
         'components_data': req.components_data
     } for req in available_jobs])
 
