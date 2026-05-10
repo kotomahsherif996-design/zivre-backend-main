@@ -499,6 +499,27 @@ def get_current_percentages():
         db.session.commit()
     return setting
 
+
+def get_withdrawal_threshold():
+    """Return the minimum withdrawal amount (default 20 GHS)"""
+    setting = SystemSetting.query.filter_by(key='withdrawal_threshold').first()
+    if setting:
+        try:
+            return float(setting.value)
+        except (ValueError, TypeError):
+            return 20.0
+    return 20.0
+
+def set_withdrawal_threshold(value):
+    """Store the withdrawal threshold in system_settings"""
+    setting = SystemSetting.query.filter_by(key='withdrawal_threshold').first()
+    if setting:
+        setting.value = str(value)
+    else:
+        setting = SystemSetting(key='withdrawal_threshold', value=str(value))
+        db.session.add(setting)
+    db.session.commit()
+    
 # ==================== EMAIL HELPER FUNCTION ====================
 def send_verification_email(user_email, user_name, verification_token):
     try:
@@ -3303,6 +3324,31 @@ def update_payment_settings():
     
     return jsonify({'message': 'Payment settings updated successfully'})
 
+
+@app.route('/api/settings/withdrawal-threshold', methods=['GET'])
+@token_required
+def get_withdrawal_threshold_route():
+    threshold = get_withdrawal_threshold()
+    return jsonify({'threshold': threshold})
+
+@app.route('/api/admin/settings/withdrawal-threshold', methods=['PUT'])
+@admin_required
+def update_withdrawal_threshold():
+    data = request.json
+    try:
+        new_threshold = float(data.get('threshold', 20))
+    except (TypeError, ValueError):
+        return jsonify({'error': 'Threshold must be a number'}), 400
+    
+    if new_threshold < 5:
+        return jsonify({'error': 'Threshold cannot be less than 5 GHS'}), 400
+    if new_threshold > 1000:
+        return jsonify({'error': 'Threshold cannot exceed 1000 GHS'}), 400
+    
+    set_withdrawal_threshold(new_threshold)
+    socketio.emit('withdrawal_threshold_updated', {'threshold': new_threshold})
+    return jsonify({'message': 'Withdrawal threshold updated', 'threshold': new_threshold})
+    
 # ==================== SESSION KEEP ALIVE ====================
 
 @app.route('/api/auth/ping', methods=['GET'])
@@ -3892,9 +3938,10 @@ def request_withdrawal():
     payment_method = data.get('payment_method')
     account_details = data.get('account_details')
     
-    if not amount or amount < WITHDRAWAL_THRESHOLD_GHS:
-        return jsonify({'error': f'Minimum withdrawal amount is GHS{WITHDRAWAL_THRESHOLD_GHS}'}), 400
-    
+    threshold = get_withdrawal_threshold()
+    if not amount or amount < threshold:
+        return jsonify({'error': f'Minimum withdrawal amount is GHS{threshold}'}), 400
+        
     if amount > (user.commission_balance or 0):
         return jsonify({'error': 'Insufficient balance'}), 400
     
@@ -3989,7 +4036,7 @@ def get_referral_kpis():
         'total_earned': float(user.total_earned or 0),
         'current_balance': float(user.commission_balance or 0),
         'is_referral_active': user.is_referral_active,
-        'withdrawal_threshold': WITHDRAWAL_THRESHOLD_GHS
+        'withdrawal_threshold': get_withdrawal_threshold()
     })
 
 # ==================== ADMIN REFERRAL ENDPOINTS ====================
