@@ -921,7 +921,7 @@ def process_referral_commissions(booking, customer):
         if not referrer:
             break
         
-        level = getattr(referrer, 'referral_level', 1)
+        level = getattr(current_user, 'referral_level', 1)
         rate_map = {1: 0.20, 2: 0.10, 3: 0.05, 4: 0.025}
         rate = rate_map.get(level, 0.025)
         commission = referral_pool * rate
