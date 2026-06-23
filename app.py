@@ -93,7 +93,7 @@ socketio = SocketIO(app,
 
 # Configure CORS properly
 ALLOWED_ORIGINS = os.environ.get('ALLOWED_ORIGINS',
-    'https://zivre-frontend-iota.vercel.app,http://localhost:5173'
+    'https://zivrefaserve.app,http://localhost:5173'
 ).split(',')
 
 CORS(app,
@@ -143,7 +143,7 @@ def admin_required(f):
 @app.after_request
 def after_request(response):
     origin = request.headers.get('Origin')
-    if origin == 'https://zivre-frontend-iota.vercel.app':
+    if origin == 'https://zivrefaserve.app':
         response.headers['Access-Control-Allow-Origin'] = origin
     response.headers['Access-Control-Allow-Credentials'] = 'true'
     response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization'
@@ -586,7 +586,7 @@ def set_withdrawal_threshold(value):
 # ==================== EMAIL HELPER FUNCTION ====================
 def send_verification_email(user_email, user_name, verification_token):
     try:
-        frontend_url = os.environ.get('FRONTEND_URL', 'hhttps://zivre-frontend-iota.vercel.app')
+        frontend_url = os.environ.get('FRONTEND_URL', 'hhttps://zivrefaserve.app')
         verification_link = f"{frontend_url}/verify-email?token={verification_token}"
         
         print(f"\n{'='*60}")
@@ -636,7 +636,7 @@ def send_verification_email(user_email, user_name, verification_token):
 # Same function for password reset
 def send_reset_email(user_email, user_name, reset_token):
     try:
-        frontend_url = os.environ.get('FRONTEND_URL', 'https://zivre-frontend-iota.vercel.app')
+        frontend_url = os.environ.get('FRONTEND_URL', 'https://zivrefaserve.app')
         reset_link = f"{frontend_url}/reset-password?token={reset_token}"
         
         print(f"\n{'='*60}")
@@ -4426,7 +4426,7 @@ def delete_request_permanently(request_id):
 @token_required
 def get_my_referral_info():
     user = request.current_user
-    frontend_url = os.environ.get('FRONTEND_URL', 'https://zivre-frontend-iota.vercel.app')
+    frontend_url = os.environ.get('FRONTEND_URL', 'https://zivrefaserve.app')
     
     return jsonify({
         'referral_code': user.referral_code,
