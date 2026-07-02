@@ -3927,20 +3927,31 @@ def _spawn_request_from_schedule(schedule):
 
 def process_due_schedules():
     """Process all active schedules whose next_run is due."""
+    # Ensure a clean transaction at the start
+    try:
+        db.session.rollback()
+    except:
+        pass
+
     now = datetime.utcnow()
-    due = ScheduledService.query.filter(
-        ScheduledService.is_active == True,  # noqa: E712
-        ScheduledService.status == 'active',
-        ScheduledService.next_run != None,    # noqa: E711
-        ScheduledService.next_run <= now
-    ).all()
+    try:
+        due = ScheduledService.query.filter(
+            ScheduledService.is_active == True,
+            ScheduledService.status == 'active',
+            ScheduledService.next_run != None,
+            ScheduledService.next_run <= now
+        ).all()
+    except Exception as e:
+        db.session.rollback()
+        print(f"Scheduler query error: {e}")
+        return
 
     for sched in due:
         try:
-            # Stop if past end date
             if sched.end_date and now > sched.end_date:
                 sched.is_active = False
                 sched.status = 'completed'
+                sched.next_run = None
                 db.session.commit()
                 continue
 
@@ -3959,6 +3970,12 @@ def process_due_schedules():
         except Exception as e:
             db.session.rollback()
             print(f"Error processing schedule {sched.id}: {e}")
+
+    # Optional: cleanup session after processing
+    try:
+        db.session.remove()
+    except:
+        pass
 
 
 def _acquire_scheduler_lock():
@@ -3987,9 +4004,25 @@ def scheduler_loop():
         print(f"⏰ Recurrence engine started (tick={SCHEDULER_TICK_SECONDS}s)")
         while True:
             try:
+                # Always start with a clean session
+                try:
+                    db.session.rollback()
+                except:
+                    pass
                 process_due_schedules()
             except Exception as e:
+                # Rollback any failed transaction and print the error
+                try:
+                    db.session.rollback()
+                except:
+                    pass
                 print(f"Scheduler loop error: {e}")
+            finally:
+                # Release the session to the pool
+                try:
+                    db.session.remove()
+                except:
+                    pass
             socketio.sleep(SCHEDULER_TICK_SECONDS)
 
 
