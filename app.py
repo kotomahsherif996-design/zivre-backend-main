@@ -3350,12 +3350,14 @@ def get_admin_stats():
     active_services = Service.query.filter_by(is_active=True).count()
     total_comments = Comment.query.count()
     
-    # ONLY count revenue from completed jobs (when provider marks complete)
-    completed_requests_list = ServiceRequest.query.filter(ServiceRequest.status.in_(['completed', 'confirmed'])).all()
-    total_revenue = sum(r.amount for r in completed_requests_list)
-    total_admin_fees = sum(r.admin_fee for r in completed_requests_list)
-    total_site_fees = sum(r.site_fee for r in completed_requests_list)
-    total_provider_payouts = sum(r.provider_payout for r in completed_requests_list)
+    # Only count revenue once the CUSTOMER has confirmed completion (i.e. actually paid the
+    # provider) — a 'completed' status just means the provider says they're done and is not
+    # money the customer has agreed was received.
+    confirmed_requests_list = ServiceRequest.query.filter(ServiceRequest.status == 'confirmed').all()
+    total_revenue = sum(r.amount for r in confirmed_requests_list)
+    total_admin_fees = sum(r.admin_fee for r in confirmed_requests_list)
+    total_site_fees = sum(r.site_fee for r in confirmed_requests_list)
+    total_provider_payouts = sum(r.provider_payout for r in confirmed_requests_list)
     
     return jsonify({
         'total_users': total_users,
